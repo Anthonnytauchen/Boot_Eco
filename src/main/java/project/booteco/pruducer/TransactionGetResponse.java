@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record TransationGetResponse(
+public record TransactionGetResponse(
         UUID id,
         String shortCode,
         BigDecimal value,

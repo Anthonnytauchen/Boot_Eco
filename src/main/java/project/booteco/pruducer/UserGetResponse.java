@@ -12,6 +12,6 @@ public record UserGetResponse(
         String emailGoogle,
         String urlGraphic ,
         StateConversation stateConversation,
-        String objetivoTextoLivre,
-        LocalDateTime dateTime) {
+        String objectiveTextFree,
+        LocalDateTime dateCreated) {
 }

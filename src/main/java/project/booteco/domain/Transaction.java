@@ -24,7 +24,7 @@ public class Transaction {
 
 
     @JoinColumn(name = "usuario_id", nullable = false)
-    private UUID user;
+    private UUID userId;
 
     @Column(name = "codigo_curto", nullable = false, unique = true, length = 10)
     private String shortCode;

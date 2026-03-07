@@ -10,20 +10,20 @@ import project.booteco.domain.TypeTransation;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record TransationPostRequest(
+public record TransactionPostRequest(
         @NotNull(message = "O ID do usuário é obrigatório")
-        UUID usuarioId,
+        UUID userId,
 
         @NotNull(message = "O valor é obrigatório")
         @Positive(message = "O valor deve ser maior que zero")
-        BigDecimal valor,
+        BigDecimal value,
 
         @NotNull(message = "O tipo da transação não pode ser nulo")
         TypeTransation typeTransacao,
 
         @NotNull(message = "A categoria não pode ser nula")
-        CategoryTransation categoryTransation,
+        CategoryTransation categoryTransaction,
 
-        String subcategoria
+        String subcategory
 )
 {}

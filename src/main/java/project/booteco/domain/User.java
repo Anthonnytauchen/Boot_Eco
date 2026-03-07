@@ -30,10 +30,10 @@ public class User {
     @EqualsAndHashCode.Include
     private UUID id;
 
-    @Column(name="telefone_whatsapp", unique = true)
+    @Column(nullable = false, name="telefone_whatsapp", unique = true)
     private String phoneWhatsapp;
 
-    @Column(name="email_google")
+    @Column(unique = true, name="email_google")
     private String emailGoogle;
 
     @Column(name="url_planilha")
@@ -41,13 +41,23 @@ public class User {
 
     @Column(name="estado_conversa")
     @Enumerated(EnumType.STRING)
-    private StateConversation stateCoversation;
+    private StateConversation stateConversation;
 
     @Column(name="objetivo_texto_livre")
     private String objectiveTextFree;
 
-    @Column(name="data_cadastro" )
+    @Column(nullable = false, name="data_cadastro" )
     @CreationTimestamp
     private LocalDateTime dateCreated;
 
+
+    @PrePersist
+    public void prePersist() {
+        if (this.stateConversation == null) {
+            this.stateConversation = StateConversation.INICIO;
+        }
+        if(this.dateCreated == null){
+            this.dateCreated = LocalDateTime.now();
+        }
+    }
 }

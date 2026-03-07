@@ -6,15 +6,15 @@ import project.booteco.domain.CategoryTransation;
 
 import java.math.BigDecimal;
 
-public record TransationPutResponse(
+public record TransactionPutResponse(
         @NotBlank(message = "O código curto da transação é obrigatório para atualização")
         String codigoCurto,
 
         @Positive(message = "O valor deve ser maior que zero")
         BigDecimal valor,
 
-        CategoryTransation categoria,
+        CategoryTransation categoryTransaction,
 
-        String subcategoria
+        String subcategory
 ) {
 }
