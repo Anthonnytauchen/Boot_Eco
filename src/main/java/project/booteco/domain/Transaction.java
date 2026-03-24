@@ -23,7 +23,7 @@ public class Transaction {
     private UUID id;
 
 
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @Column(name = "usuario_id", nullable = false)
     private UUID userId;
 
     @Column(name = "codigo_curto", nullable = false, unique = true, length = 10)

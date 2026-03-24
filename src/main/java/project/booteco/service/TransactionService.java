@@ -87,7 +87,7 @@ public class TransactionService {
         Map<CategoryTransation,BigDecimal> categoryCalculate = mapCalculeteCategory(transactionList);
         return new MonthlyReportResponse(receita,despesas,receita.subtract(despesas),categoryCalculate);
     }
-    public MonthlyReportResponse genareteMonthlySummary(UUID userID) {
+    public MonthlyReportResponse generateMonthlySummary(UUID userID) {
         List<Transaction> transactionList = transactionRepository.findByUserIdAndStatus(userID, StatusTransation.ATIVA);
 
         return calculateSummary(transactionList); // Passa a lista para o motor
