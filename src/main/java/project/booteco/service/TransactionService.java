@@ -1,5 +1,6 @@
 package project.booteco.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -77,11 +78,7 @@ public class TransactionService {
     }
 
 
-    public MonthlyReportResponse genareteMonthlySummary(UUID userID) {
-        List<Transaction> transactionList = transactionRepository.findByUserIdAndStatus(
-                userID,
-                StatusTransation.ATIVA
-        );
+    public MonthlyReportResponse calculateSummary(List<Transaction> transactionList) {
 
         BigDecimal receita = calculate(transactionList, TypeTransation.RECEITA);
 
@@ -90,7 +87,12 @@ public class TransactionService {
         Map<CategoryTransation,BigDecimal> categoryCalculate = mapCalculeteCategory(transactionList);
         return new MonthlyReportResponse(receita,despesas,receita.subtract(despesas),categoryCalculate);
     }
+    public MonthlyReportResponse genareteMonthlySummary(UUID userID) {
+        List<Transaction> transactionList = transactionRepository.findByUserIdAndStatus(userID, StatusTransation.ATIVA);
 
+        return calculateSummary(transactionList); // Passa a lista para o motor
+    }
+@Transactional
     public MonthlyReportResponse closeMonth (UUID userID){
         List<Transaction> transactionList = transactionRepository.findByUserIdAndStatus(
                 userID,
@@ -99,7 +101,7 @@ public class TransactionService {
         if (transactionList.isEmpty()){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"No transactions found");
         }
-        MonthlyReportResponse closeMonth = genareteMonthlySummary(userID);
+        MonthlyReportResponse closeMonth = calculateSummary(transactionList);
 
         transactionList.forEach(t-> t.setStatus(StatusTransation.FECHADA));
 
