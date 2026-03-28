@@ -49,7 +49,7 @@ public class BotService {
     private String dealingBeginning(UserGetResponse user, String message){
         userService.updateUser(new UserPutResponse(user.id(),null,StateConversation.AGUARDANDO_EMAIL,null));
         return "Olá! Bem-vindo ao BootEco. Para começarmos, qual é o seu e-mail do Google? " +
-                "Obs: Irei mandar relatorios graficos toda vez que voce pedir o relario de gastos";
+                "Obs: Irei mandar monthlyReports graficos toda vez que voce pedir o relario de gastos";
     }
     private String dealingEmail(UserGetResponse user, String message){
         userService.updateUser(new UserPutResponse(user.id(),message,StateConversation.AGUARDANDO_OBJETIVO_TEXTO,null));
@@ -61,40 +61,157 @@ public class BotService {
                 "O seu cadastro está concluído. A partir de agora, pode mandar as suas transações livremente.\n\n" +
                 "Para começarmos, digite como se estivesse a falar com um amigo qual é a sua renda mensal (Ex: 'Recebi 5000 do meu salário hoje').";
     }
+
+    private String processAITransaction(UserGetResponse user, String message) throws Exception{
+        String jsonIa= aiService.extractTransactionFromJson(message);
+        log.info("JSON recebido da IA: {}", jsonIa);
+        JsonNode transacaoNode = objectMapper.readTree(jsonIa);
+        TransactionPostRequest request = buildTransactionRequest(user, transacaoNode, message);
+        TransactionGetResponse transacaoSalva = transactionService.createTransaction(request);
+        return getGenereteSucess(transacaoSalva);
+    }
+
+    private TransactionPostRequest buildTransactionRequest(UserGetResponse user, JsonNode transacaoNode, String originalMessage) {
+        double valorDouble = transacaoNode.get("valor").asDouble();
+        String tipoTexto = transacaoNode.get("tipo").asText().toUpperCase().trim();
+        String categoriaTexto = transacaoNode.get("categoria").asText().toUpperCase().trim();
+
+
+        categoriaTexto = removeAccents(categoriaTexto);
+
+        BigDecimal value = BigDecimal.valueOf(valorDouble);
+        TypeTransation type = TypeTransation.valueOf(tipoTexto);
+        CategoryTransation categoryTransation = CategoryTransation.valueOf(categoriaTexto);
+
+        String subcategoria = originalMessage.length() > 50 ? originalMessage.substring(0, 47) + "..." : originalMessage;
+
+        return new TransactionPostRequest(user.id(), value, type, categoryTransation, subcategoria);
+    }
+    private String monthlyReportResponse(UserGetResponse user){
+       MonthlyReportResponse monthlyReport = transactionService.generateMonthlySummary(user.id());
+        
+       StringBuilder sb = new StringBuilder();
+        sb.append("📊 *O seu Relatório Mensal* 📊\n\n");
+
+        // Totais
+        sb.append("📈 *Receitas:* R$ ").append(monthlyReport.totalRevenue()).append("\n");
+        sb.append("📉 *Despesas:* R$ ").append(monthlyReport.totalExpense()).append("\n");
+
+
+        sb.append("💰 *Saldo:* R$ ").append(monthlyReport.totalSaved()).append("\n\n");
+
+        // 3. Iterar sobre o Mapa de Gastos por Categoria
+        if (monthlyReport.gastosPorCategoria() != null && !monthlyReport.gastosPorCategoria().isEmpty()) {
+            sb.append("📋 *Gastos por Categoria:*\n");
+
+
+            monthlyReport.gastosPorCategoria().forEach((categoria, valor) -> {
+
+                sb.append(" 🔸 ").append(categoria.name()).append(": R$ ").append(valor).append("\n");
+            });
+        } else {
+            sb.append("Ainda não tem gastos categorizados registados neste mês.\n");
+        }
+
+        return sb.toString();
+
+    }
+
     private String dealingFree(UserGetResponse user, String message){
         try {
-            // 1. Pega no JSON da IA
-            String jsonDaIA = aiService.extractTransactionFromJson(message);
+            message = removeAccents(message);
+            String msUpper = message.toUpperCase().trim();
+            if (message.equals("1")){
+                return monthlyReportResponse(user);
+            } else if (message.equals("2") || msUpper.equals("CANCELAR ")) {
+                return cancelTransaction(user, message);
+            } else if (message.equals("3") || msUpper.equals("FECHAR")) {
+                return closeMonth(user,message);
+            }
+            return processAITransaction(user, message);
 
-            // 2. Lê a "Árvore" usando o mapper reaproveitado
-            JsonNode transacaoNode = objectMapper.readTree(jsonDaIA);
-
-            // 3. Extrai os valores usando classes limpas
-            BigDecimal valor = BigDecimal.valueOf(transacaoNode.get("valor").asDouble());
-            TypeTransation tipo = TypeTransation.valueOf(transacaoNode.get("tipo").asText());
-            CategoryTransation categoria = CategoryTransation.valueOf(transacaoNode.get("categoria").asText());
-
-            // 4. Monta o DTO
-            TransactionPostRequest request = new TransactionPostRequest(
-                    user.id(),
-                    valor,
-                    tipo,
-                    categoria,
-                    message
-            );
-
-            // 5. Guarda na Base de Dados
-            TransactionGetResponse transacaoSalva = transactionService.createTransaction(request);
-
-            // 6. Devolve o recibo
-            return "✅ Registado com sucesso!\n" +
-                    "Tipo: " + transacaoSalva.type() + "\n" +
-                    "Valor: R$ " + transacaoSalva.value() + "\n" +
-                    "Categoria: " + transacaoSalva.categoryTransaction();
-
-        } catch (Exception e) {
-            log.error("Erro ao processar transação livre: ", e);
-            return "Ops! O meu cérebro confundiu-se com os valores. Pode tentar escrever de forma mais direta? (Ex: 'Gastei 50 no Ifood').";
+        }catch (Exception e){
+            log.error("Erro ao processar mensagem livre: ", e);
+            return getFallbackMenuMessage();
         }
+    }
+    private String closeMonth(UserGetResponse user, String message) {
+        String msUpper = message.toUpperCase().trim();
+
+        // 1. O usuário clicou na opção 3 do menu
+        if (msUpper.equals("3")) {
+            return "⚠️ *Atenção!* Você tem certeza que deseja fechar o seu mês?\n\n" +
+                    "Isso irá gerar o seu relatório final e *apagar todos os seus registros* até o dia de hoje.\n\n" +
+                    "Para confirmar, digite a palavra: *FECHAR*";
+        }
+
+        // 2. O usuário confirmou com a palavra FECHAR
+        if (msUpper.equals("FECHAR")) {
+            try {
+                // A. Gera o relatório FINAL do mês com os dados ainda no banco
+                String relatorioFinal = monthlyReportResponse(user);
+
+                // B. Agora sim, apaga/arquiva os dados
+                transactionService.closeMonth(user.id());
+
+                // C. Retorna a mensagem de sucesso junto com o resumão do mês que passou
+                return "✅ *Mês fechado com sucesso!* Seus registros foram zerados para o próximo mês.\n\n" +
+                        "Aqui está o seu resumo final:\n\n" +
+                        relatorioFinal;
+
+            } catch (Exception e) {
+                log.error("Erro ao fechar o mês para o usuário {}: ", user.id(), e);
+                return "❌ Ops! Ocorreu um erro e não foi possível fechar o seu mês. Tente novamente mais tarde.";
+            }
+        }
+
+        // 3. Se cair aqui, é porque a mensagem não era nem "3" nem "FECHAR"
+        return getFallbackMenuMessage();
+    }
+    private String cancelTransaction(UserGetResponse user, String message){
+        String msUpper= message.toUpperCase().trim();
+        if(msUpper.equals("2") ){
+            return "🗑️ *Apagar uma Transação*\n\n" +
+                    "Para apagar, digite a palavra *CANCELAR* seguida do código gerado no recibo.\n\n" +
+                    "💡 *Exemplo:* CANCELAR AB123";
+        }
+        String shortCode = message.substring(9).trim();
+        try{
+            transactionService.cancelTransactionByShortCode(user.id(),shortCode);
+            return "✅ Transação *" + shortCode + "* apagada com sucesso!";
+        }catch (Exception e){
+            log.error("Erro ao cancelar transação {}: ", shortCode, e);
+            return "❌ Ops! Não foi possível apagar.\n\n" +
+                    "Verifique se o código *" + shortCode + "* está correto ou se a transação já foi excluída.";
+        }
+    }
+    private String removeAccents(String text) {
+        return text.replace("Ç", "C")
+                .replace("Ã", "A")
+                .replace("Õ", "O")
+                .replace("É", "E")
+                .replace("Í", "I");
+    }
+    private String getFallbackMenuMessage() {
+        return "🤔 Ops, não entendi muito bem. O que você deseja fazer?\n\n" +
+                "1️⃣ - Ver Relatório Mensal\n" +
+                "2️⃣ - Apagar uma transação\n" +
+                "3️⃣ - Fechar o mês\n\n" +
+                "💡 *Dica:* Você também pode simplesmente digitar o seu gasto ou receita.\n" +
+                "Ex: _'Recebi 5000 de salário'_ ou _'Gastei 50 no iFood'_";
+    }
+
+    private String getGenereteSucess(TransactionGetResponse transacaoSalva) {
+        return "✅ *Transação registrada com sucesso!*\n\n" +
+                "🏷️ *Tipo:* " + transacaoSalva.type() + "\n" +
+                "💲 *Valor:* R$ " + transacaoSalva.value() + "\n" +
+                "📂 *Categoria:* " + transacaoSalva.categoryTransaction() + "\n" +
+                "🗑️ *Código p/ cancelamento:* " + transacaoSalva.shortCode() + "\n" +
+                "--------------------------\n" +
+                "O que deseja fazer agora?\n\n" +
+                "1️⃣ - Ver Relatório Mensal\n" +
+                "2️⃣ - Apagar uma transação\n" +
+                "3️⃣ - Fechar o mês\n\n" +
+                "💡 Ou simplesmente digite o seu próximo gasto/receita.";
     }
 }

@@ -41,13 +41,13 @@ public class TransactionService {
     }
 
 
-    public void cancelTransactionByShortCode(String shortCode){
-        var transaction = transactionRepository.findByShortCode(shortCode).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Transaction not foud"));
+    public void cancelTransactionByShortCode(UUID userId,String shortCode){
+        var transaction = transactionRepository.findByUserIdAndShortCode(userId,shortCode).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Transaction not foud"));
         transaction.setStatus(StatusTransation.CANCELADA);
         transactionRepository.save(transaction);
     }
-    public TransactionGetResponse updateTransactionByShortCode(String shortCode, TransactionPutResponse request){
-        var transaction = transactionRepository.findByShortCode(shortCode).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"Transaction not found"));
+    public TransactionGetResponse updateTransactionByShortCode(UUID userId,String shortCode, TransactionPutResponse request){
+        var transaction = transactionRepository.findByUserIdAndShortCode(userId, shortCode).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"Transaction not found"));
         if(transaction.getStatus()== StatusTransation.CANCELADA){
             throw new ResponseStatusException(HttpStatus.CONFLICT,"Transaction already canceled");
         }

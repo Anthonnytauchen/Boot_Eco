@@ -34,15 +34,18 @@ public class AiService {
             String jsonResponse = callGeminiApi(requestBody);
 
             return parseGeminiResponse(jsonResponse);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Erro ao chamar a API da IA: {}", e.getMessage());
-            return "Desculpe, o meu cérebro (IA) está fora do ar no momento.";
+            throw new RuntimeException("Falha ao comunicar com a IA. Tente novamente em alguns segundos.", e);
         }
     }
     private String buildPrompt(String texto) {
         return """
                 Você é um assistente financeiro. Leia a seguinte frase e extraia os dados financeiros.
-                Devolva APENAS um JSON válido, sem blocos de código markdown (sem ```json), com as chaves:
+                
+                REGRA IMPORTANTE: Se a frase NÃO contiver informações claras sobre um gasto ou ganho de dinheiro, responda APENAS com a palavra: ERRO.
+                
+                Caso seja uma transação financeira válida, devolva APENAS um JSON válido, sem blocos de código markdown (sem ```json), com as chaves:
                 - "valor": número decimal (ex: 50.50)
                 - "tipo": exatamente a palavra "RECEITA" ou "DESPESA"
                 - "categoria": escolha uma entre "ALIMENTACAO", "SAUDE", "TRANSPORTE", "MORADIA", "LAZER", "EDUCACAO", ou "OUTROS"
@@ -50,7 +53,6 @@ public class AiService {
                 Frase do utilizador: "%s"
                 """.formatted(texto);
     }
-
     private Map<String, Object> buildRequestBody(String prompt) {
         return Map.of(
                 "contents", List.of(

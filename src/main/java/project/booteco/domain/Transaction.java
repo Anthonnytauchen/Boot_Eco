@@ -51,5 +51,11 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private StatusTransation status= StatusTransation.ATIVA;
 
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = StatusTransation.ATIVA;
+        }
+    }
 }
 

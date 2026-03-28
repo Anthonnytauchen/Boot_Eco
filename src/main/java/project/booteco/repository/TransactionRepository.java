@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
-    Optional<Transaction> findByShortCode(String shortCode);
+    Optional<Transaction> findByUserIdAndShortCode(UUID userId,String shortCode);
     List<Transaction> findByUserIdAndStatus(UUID userId, StatusTransation status);
 }
