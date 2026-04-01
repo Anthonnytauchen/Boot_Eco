@@ -34,11 +34,11 @@ public class Transaction {
 
     @Column(name = "tipo", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    private TypeTransation type;
+    private TypeTransaction type;
 
     @Column(name = "categoria", length = 50)
     @Enumerated(EnumType.STRING)
-    private CategoryTransation categoryTransaction;
+    private CategoryTransaction categoryTransaction;
 
     @Column(name = "subcategoria", length = 50)
     private String subcategory;
@@ -49,12 +49,12 @@ public class Transaction {
 
     @Column(name = "status", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    private StatusTransation status= StatusTransation.ATIVA;
+    private StatusTransaction status= StatusTransaction.ATIVA;
 
     @PrePersist
     public void prePersist() {
         if (this.status == null) {
-            this.status = StatusTransation.ATIVA;
+            this.status = StatusTransaction.ATIVA;
         }
     }
 }

@@ -1,6 +1,6 @@
 package project.booteco.domain;
 
-public enum TypeTransation {
+public enum TypeTransaction {
     RECEITA,
     DESPESA,
     INVESTIMENTO

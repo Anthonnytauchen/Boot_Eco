@@ -4,25 +4,32 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import project.booteco.config.GeminiConfigurationProperties;
 
 
 @Service
 @Slf4j
-public class AiService {
-    private final String apiKey;
-    private final String apiUrl;
-    private final RestClient restClient;
-    private  final ObjectMapper objectMapper;
 
-    public AiService(@Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.url}") String apiUrl){
-        this.apiKey = apiKey;
-        this.apiUrl = apiUrl;
-        this.restClient = RestClient.create();
+public class AiService {
+    private final RestClient restClient;
+    private final GeminiConfigurationProperties geminiProperties;
+    private final ObjectMapper objectMapper;
+
+    public AiService(GeminiConfigurationProperties geminiProperties) {
+        this.geminiProperties = geminiProperties;
         this.objectMapper = new ObjectMapper();
+        // Agora você acessa os valores através dos métodos do record
+        this.restClient = RestClient.builder()
+                .baseUrl(geminiProperties.url())
+                .defaultHeader("x-goog-api-key", geminiProperties.key())
+                .defaultHeader("Content-Type", "application/json")
+                .build();
     }
 
     public String extractTransactionFromJson(String userInput) {
@@ -63,12 +70,10 @@ public class AiService {
         );
     }
     private String callGeminiApi(Map<String, Object> requestBody) {
-        return restClient.post().uri(apiUrl).
-                header("x-goog-api-key", apiKey).
-                header("Content-Type", "application/json").
-                body(requestBody).
-                retrieve().
-                body(String.class);
+        return restClient.post()
+                .body(requestBody)
+                .retrieve()
+                .body(String.class);
 
     }
     private String parseGeminiResponse(String jsonResponse) throws Exception {

@@ -1,6 +1,6 @@
 package project.booteco.pruducer;
 
-import project.booteco.domain.CategoryTransation;
+import project.booteco.domain.CategoryTransaction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,7 +11,7 @@ public record TransactionGetResponse(
         String shortCode,
         BigDecimal value,
         String type,
-        CategoryTransation categoryTransaction,
+        CategoryTransaction categoryTransaction,
         String subcategory,
         LocalDateTime date,
         String status

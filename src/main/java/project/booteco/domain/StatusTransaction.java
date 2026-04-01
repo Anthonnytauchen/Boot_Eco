@@ -1,6 +1,6 @@
 package project.booteco.domain;
 
-public enum StatusTransation {
+public enum StatusTransaction {
     ATIVA,
     CANCELADA,
     FECHADA

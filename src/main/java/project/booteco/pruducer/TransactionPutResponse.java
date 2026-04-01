@@ -2,7 +2,7 @@ package project.booteco.pruducer;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-import project.booteco.domain.CategoryTransation;
+import project.booteco.domain.CategoryTransaction;
 
 import java.math.BigDecimal;
 
@@ -13,7 +13,7 @@ public record TransactionPutResponse(
         @Positive(message = "O valor deve ser maior que zero")
         BigDecimal valor,
 
-        CategoryTransation categoryTransaction,
+        CategoryTransaction categoryTransaction,
 
         String subcategory
 ) {

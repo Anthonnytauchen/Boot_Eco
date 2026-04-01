@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import project.booteco.domain.CategoryTransation;
+import project.booteco.domain.CategoryTransaction;
 import project.booteco.domain.StateConversation;
-import project.booteco.domain.TypeTransation;
+import project.booteco.domain.TypeTransaction;
 import project.booteco.pruducer.*;
 
 import java.math.BigDecimal;
@@ -80,12 +80,12 @@ public class BotService {
         categoriaTexto = removeAccents(categoriaTexto);
 
         BigDecimal value = BigDecimal.valueOf(valorDouble);
-        TypeTransation type = TypeTransation.valueOf(tipoTexto);
-        CategoryTransation categoryTransation = CategoryTransation.valueOf(categoriaTexto);
+        TypeTransaction type = TypeTransaction.valueOf(tipoTexto);
+        CategoryTransaction categoryTransaction = CategoryTransaction.valueOf(categoriaTexto);
 
         String subcategoria = originalMessage.length() > 50 ? originalMessage.substring(0, 47) + "..." : originalMessage;
 
-        return new TransactionPostRequest(user.id(), value, type, categoryTransation, subcategoria);
+        return new TransactionPostRequest(user.id(), value, type, categoryTransaction, subcategoria);
     }
     private String monthlyReportResponse(UserGetResponse user){
        MonthlyReportResponse monthlyReport = transactionService.generateMonthlySummary(user.id());

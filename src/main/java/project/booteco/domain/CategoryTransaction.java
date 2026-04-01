@@ -1,6 +1,6 @@
 package project.booteco.domain;
 
-public enum CategoryTransation {
+public enum CategoryTransaction {
     ALIMENTACAO,
     SAUDE,
     TRANSPORTE,
