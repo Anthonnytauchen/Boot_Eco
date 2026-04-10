@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalErrorHandlerAdvice {
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<UserNotFoundException> defaultErrorMessage(UserNotFoundException e){
-      var error = new  UserNotFoundException(HttpStatus.NOT_FOUND.value(),e.getReason());
+    public ResponseEntity<DefautErrorMesage> handleUserNotFounde(UserNotFoundException e){
+      var error = new  DefautErrorMesage(HttpStatus.NOT_FOUND.value(),e.getMessage());
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 }

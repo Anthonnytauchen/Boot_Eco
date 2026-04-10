@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import project.booteco.config.GeminiConfigurationProperties;
+import project.booteco.exeptions.AiProcessingException;
 import project.booteco.exeptions.UserNotFoundException;
 
 
@@ -44,7 +45,7 @@ public class AiService {
             return parseGeminiResponse(jsonResponse);
         } catch (Exception e) {
             log.error("Erro ao chamar a API da IA: {}", e.getMessage());
-            throw new UserNotFoundException(500, "Erro ao chamar a API da IA");
+            throw new AiProcessingException("Erro ao chamar API da IA. Tente novamente mais tarde.");
         }
     }
     private String buildPrompt(String texto) {
