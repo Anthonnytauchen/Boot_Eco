@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import project.booteco.exeptions.UserNotFoundException;
 import project.booteco.mapper.UserMapper;
 import project.booteco.pruducer.UserGetResponse;
 import project.booteco.pruducer.UserPostRequest;
@@ -19,7 +20,7 @@ public class UserService {
 
     public UserGetResponse createdUser (UserPostRequest request){
         if(repo.findByPhoneWhatsapp(request.phoneWhatsapp()).isPresent()){
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"This number already exists");
+            throw new UserNotFoundException("Usuário não encontrado. Inicie uma nova conversa.");
         }
         var user = mapper.toEntity(request);
 
@@ -30,12 +31,12 @@ public class UserService {
 
     public UserGetResponse findByPhone(String phoneWhatsapp){
         var user = repo.findByPhoneWhatsapp(phoneWhatsapp).orElseThrow(()->
-                new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found."));
+                new UserNotFoundException("Usuário não encontrado. Inicie uma nova conversa."));
 
         return  mapper.toResponse(user);
     }
     public UserGetResponse updateUser(UserPutResponse request){
-        var user = repo.findById(request.id()).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found."));
+        var user = repo.findById(request.id()).orElseThrow(()-> new UserNotFoundException("Usuário não encontrado. Inicie uma nova conversa."));
 
         mapper.updateEntity(request,user);
 

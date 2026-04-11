@@ -9,6 +9,7 @@ import project.booteco.domain.CategoryTransaction;
 import project.booteco.domain.StatusTransaction;
 import project.booteco.domain.Transaction;
 import project.booteco.domain.TypeTransaction;
+import project.booteco.exeptions.TransactionNotFoundException;
 import project.booteco.mapper.TransactionMapper;
 import project.booteco.pruducer.MonthlyReportResponse;
 import project.booteco.pruducer.TransactionGetResponse;
@@ -33,7 +34,7 @@ public class TransactionService {
     private final UserRepository userRepository;
 
     public TransactionGetResponse createTransaction(TransactionPostRequest request) {
-        userRepository.findById(request.userId()).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found."));
+        userRepository.findById(request.userId()).orElseThrow(()->new TransactionNotFoundException("Transação não encontrada. Verifique o código."));
         var newTransaction = mapper.toEntity(request);
         newTransaction.setShortCode(generateShortCode());
         transactionRepository.save(newTransaction);
@@ -42,14 +43,14 @@ public class TransactionService {
 
 
     public void cancelTransactionByShortCode(UUID userId,String shortCode){
-        var transaction = transactionRepository.findByUserIdAndShortCode(userId,shortCode).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Transaction not foud"));
+        var transaction = transactionRepository.findByUserIdAndShortCode(userId,shortCode).orElseThrow(()->new TransactionNotFoundException("Transação não encontrada. Verifique o código."));
         transaction.setStatus(StatusTransaction.CANCELADA);
         transactionRepository.save(transaction);
     }
     public TransactionGetResponse updateTransactionByShortCode(UUID userId,String shortCode, TransactionPutResponse request){
-        var transaction = transactionRepository.findByUserIdAndShortCode(userId, shortCode).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"Transaction not found"));
+        var transaction = transactionRepository.findByUserIdAndShortCode(userId, shortCode).orElseThrow(()-> new TransactionNotFoundException("Transação não encontrada. Verifique o código."));
         if(transaction.getStatus()== StatusTransaction.CANCELADA){
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Transaction already canceled");
+            throw new TransactionNotFoundException("Transação não encontrada. Verifique o código.");
         }
         mapper.updateEntity(request,transaction);
         transactionRepository.save(transaction);
@@ -99,7 +100,7 @@ public class TransactionService {
                 StatusTransaction.ATIVA
         );
         if (transactionList.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"No transactions found");
+            throw new TransactionNotFoundException("Transação não encontrada. Verifique o código.");
         }
         MonthlyReportResponse closeMonth = calculateSummary(transactionList);
 
