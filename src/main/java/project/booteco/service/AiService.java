@@ -45,7 +45,7 @@ public class AiService {
             return parseGeminiResponse(jsonResponse);
         } catch (Exception e) {
             log.error("Erro ao chamar a API da IA: {}", e.getMessage());
-            throw new AiProcessingException("Erro ao chamar API da IA. Tente novamente mais tarde.");
+            throw new AiProcessingException("Erro ao chamar API da IA. Tente novamente mais tarde.",e);
         }
     }
     private String buildPrompt(String texto) {

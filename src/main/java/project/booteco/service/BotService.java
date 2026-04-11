@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import project.booteco.domain.CategoryTransaction;
 import project.booteco.domain.StateConversation;
 import project.booteco.domain.TypeTransaction;
+import project.booteco.exeptions.UserNotFoundException;
 import project.booteco.pruducer.*;
 
 import java.math.BigDecimal;
@@ -41,7 +42,7 @@ public class BotService {
     private UserGetResponse getOrCreateUser(String phone){
         try{
         return userService.findByPhone(phone);
-        }catch (ResponseStatusException e){
+        }catch (UserNotFoundException e){
             log.info("User not found, creating new user with phone: {}",phone);
             return userService.createdUser(new UserPostRequest(phone));
         }
