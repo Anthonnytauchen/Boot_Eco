@@ -1,6 +1,9 @@
 package project.booteco.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper; // Adicione este import!
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.booteco.service.BotService;
-import project.booteco.service.WhatsAppService; // Vamos criar este serviço no Passo 2
+import project.booteco.service.WhatsAppService;
 
 @RestController
 @RequestMapping("/webhook")
@@ -18,14 +21,15 @@ public class BotController {
 
     private final BotService botService;
     private final WhatsAppService whatsAppService;
+    private final ObjectMapper objectMapper = new ObjectMapper();// Adicionamos o ObjectMapper aqui
 
     @Value("${webhook.secret.token:token_de_teste_123}")
     private String secretToken;
 
     @PostMapping
     public ResponseEntity<String> receptionistPost(
-            @RequestHeader(value = "X-Bot-Token", required = false) String tokenAcesso,
-            @RequestBody JsonNode payload) {
+            @RequestParam(value = "token", required = false) String tokenAcesso,
+            @RequestBody String rawPayload) { // <-- Recebemos como String bruta!
 
         // 1. Barreira de Segurança
         if (tokenAcesso == null || !tokenAcesso.equals(secretToken)) {
@@ -34,41 +38,54 @@ public class BotController {
         }
 
         try {
-            // 2. Evitar loop infinito (O bot não pode processar mensagens que ele mesmo enviou)
-            boolean fromMe = payload.path("data").path("key").path("fromMe").asBoolean(false);
-            if (fromMe) {
+            // Imprime o JSON inteiro no console
+            log.info("JSON Bruto Recebido: {}", rawPayload);
+
+            // 2. Converte a String manualmente para JsonNode
+            JsonNode payload = objectMapper.readTree(rawPayload);
+
+            // Garante que é um evento de Mensagem e não outra notificação
+            if (!"Message".equals(payload.path("Type").asText(""))) {
+                return ResponseEntity.ok("Ignorado: Não é uma mensagem de chat");
+            }
+
+            // Atalho para o nó principal de dados
+            JsonNode contentNode = payload.path("Payload").path("Content");
+
+            // 3. Evitar loop infinito (Na sua plataforma, "Source" diz quem enviou)
+            // Se não for "Contact" (ou seja, foi o próprio sistema/bot), ignora.
+            String source = contentNode.path("LastMessage").path("Source").asText("");
+            if (!"Contact".equalsIgnoreCase(source)) {
                 return ResponseEntity.ok("Ignorado: Mensagem do próprio bot");
             }
 
-            // 3. Extração do Telefone (Padrão Evolution API: 555199999999@s.whatsapp.net)
-            String phone = payload.path("data").path("key").path("remoteJid").asText();
-            if (phone != null && phone.contains("@")) {
-                phone = phone.split("@")[0]; // Pega só os números
+            // 4. Extração do Telefone e Chat ID
+            String phone = contentNode.path("Contact").path("PhoneNumber").asText("");
+            if (phone.startsWith("+")) {
+                phone = phone.substring(1);
             }
 
-            // 4. Extração do Texto (Pode vir em campos diferentes dependendo se tem link/emoji)
-            JsonNode messageNode = payload.path("data").path("message");
-            String message = messageNode.has("conversation")
-                    ? messageNode.get("conversation").asText()
-                    : messageNode.path("extendedTextMessage").path("text").asText();
+            // 🔥 NOVO: Pegamos o ID da conversa que a Umbler gerou!
+            String chatId = contentNode.path("Id").asText("");
 
-            // 5. Processar e Enviar a Resposta
+            // 5. Extração do Texto
+            String message = contentNode.path("LastMessage").path("Content").asText("");
+
+            // 6. Processar e Enviar a Resposta
             if (message != null && !message.isBlank()) {
                 log.info("Processando mensagem de {}: {}", phone, message);
 
-                // Gera a resposta com a sua inteligência de negócio
                 String respostaDoBot = botService.processMessage(phone, message);
 
-                // Faz o POST devolvendo a resposta para o WhatsApp
-                whatsAppService.sendMessage(phone, respostaDoBot);
+                // 🔥 NOVO: Passamos o chatId em vez do phone para a Umbler
+                whatsAppService.sendMessage(chatId, respostaDoBot);
             }
 
-            // O Webhook só precisa receber um OK 200 rápido para saber que deu certo
             return ResponseEntity.ok("Processado com sucesso");
-
-        } catch (Exception e) {
-            log.error("Erro ao ler JSON da API de WhatsApp", e);
-            return ResponseEntity.badRequest().body("Erro interno");
+    } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
-}
+    }

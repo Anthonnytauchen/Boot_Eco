@@ -1,6 +1,7 @@
 package project.booteco.service;
 
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,34 +14,27 @@ import java.util.Map;
 public class WhatsAppService {
 
     private final RestClient restClient;
-    private final String instanceName;
 
     public WhatsAppService(
-            @Value("${whatsapp.api.url:http://localhost:8080}") String apiUrl,
-            @Value("${whatsapp.api.apikey:global_apikey}") String apiKey,
-            @Value("${whatsapp.api.instance:minha_instancia}") String instanceName) {
+            @Value("${utalk.api.url:https://app-utalk.umbler.com/api}") String apiUrl,
+            @Value("${utalk.api.token}") String apiToken) {
 
-        this.instanceName = instanceName;
         this.restClient = RestClient.builder()
                 .baseUrl(apiUrl)
-                .defaultHeader("apikey", apiKey)
+                // A Umbler usa "Bearer" antes do token
+                .defaultHeader("Authorization", "Bearer " + apiToken)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }
 
-    public void sendMessage(String phone, String text) {
-        // Padrão de envio da Evolution API
-        String endpoint = "/message/sendText/" + instanceName;
+    public void sendMessage(String chatId, String text) {
+        // Rota da Umbler U-Talk
+        String endpoint = "/v1/messages/";
 
+        // O JSON extamente como a documentação pede
         Map<String, Object> body = Map.of(
-                "number", phone,
-                "options", Map.of(
-                        "delay", 1200, // Dá um delay para parecer humano digitando
-                        "presence", "composing"
-                ),
-                "textMessage", Map.of(
-                        "text", text
-                )
+                "chatId", chatId,
+                "message", text
         );
 
         try {
@@ -50,9 +44,9 @@ public class WhatsAppService {
                     .retrieve()
                     .toBodilessEntity();
 
-            log.info("Mensagem enviada com sucesso para {}", phone);
+            log.info("✅ Mensagem devolvida com sucesso para o chat {}", chatId);
         } catch (Exception e) {
-            log.error("Falha ao enviar mensagem para {}: {}", phone, e.getMessage());
+            log.error("❌ Falha ao enviar mensagem para o chat {}: {}", chatId, e.getMessage());
         }
     }
 }
