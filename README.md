@@ -1,5 +1,4 @@
-   bootEco - Assistente Financeiro Inteligente 🚀
-
+ bootEco - Assistente Financeiro Inteligente 🚀
 O bootEco é um assistente financeiro pessoal baseado em conversação que utiliza Inteligência Artificial para simplificar o controlo de gastos e receitas. Em vez de preencher formulários complexos, o utilizador simplesmente envia mensagens de texto natural (como se estivesse a falar com um amigo) e o bot processa, categoriza e regista os dados automaticamente.
 
 📋 Sobre o Projeto
@@ -86,3 +85,45 @@ Estudante de Sistemas de Informação - UNISINOS
 SDR na SKA | Transição de Carreira para Software Engineering
 
 LinkedIn
+
+Instruções para o seu Portfólio:
+Para que este README fique perfeito no seu GitHub:
+
+Crie o ficheiro: No seu projeto, crie um ficheiro chamado README.md na raiz e cole o texto acima.
+
+Prints/Vídeo: Grave um vídeo curto (pode ser com o telemóvel ou gravador de ecrã) a mandar um comando pelo Postman e a ver a resposta do bot. Guarde este vídeo numa pasta /docs no repositório e coloque o link no início do README.
+
+Refatoração Final: Lembre-se de fazer a última refatoração que discutimos (mudar o nome do pacote de exeptions para exceptions e o record para DefaultErrorMessage) para que o código corresponda exatamente à descrição do README.
+
+Vou agora gerar o ficheiro .md para que possa fazer o download diretamente.
+
+Configure as variáveis de ambiente no seu sistema ou IDE:
+
+GEMINI_API_KEY: Sua chave do Google Gemini.
+
+DB_URL: jdbc:postgresql://localhost:5432/BotEco
+
+DB_USER: Seu utilizador do Postgres.
+
+DB_PASS: Sua senha do Postgres.
+
+Execute a aplicação:
+
+Bash
+./mvnw spring-boot:run
+🛣️ Roadmap
+[ ] Integração oficial com a API do WhatsApp (Meta Cloud API).
+
+[ ] Exportação automatizada de dados para Google Sheets via Google Drive API.
+
+[ ] Implementação de Testes de Integração com Testcontainers.
+
+[ ] Deploy em nuvem utilizando Docker e Railway/Render.
+
+👤 Autor
+Anthonny de Freitas Tauchen
+
+Estudante de Sistemas de Informação - UNISINOS
+
+SDR na SKA | Transição de Carreira para Software Engineering
+
