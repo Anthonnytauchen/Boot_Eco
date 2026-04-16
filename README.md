@@ -1,4 +1,4 @@
-                                                                                                          bootEco - Assistente Financeiro Inteligente 🚀
+   bootEco - Assistente Financeiro Inteligente 🚀
 
 O bootEco é um assistente financeiro pessoal baseado em conversação que utiliza Inteligência Artificial para simplificar o controlo de gastos e receitas. Em vez de preencher formulários complexos, o utilizador simplesmente envia mensagens de texto natural (como se estivesse a falar com um amigo) e o bot processa, categoriza e regista os dados automaticamente.
 
